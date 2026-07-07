@@ -1,0 +1,34 @@
+body {
+  margin: 0;
+  font-family: Segoe UI, Arial, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+main {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 48px 24px;
+}
+
+h1 {
+  color: #f8fafc;
+  font-size: 2.4rem;
+}
+
+h2 {
+  color: #cbd5e1;
+  margin-top: 32px;
+}
+
+p, li {
+  line-height: 1.6;
+}
+
+pre {
+  overflow-x: auto;
+  background: #111827;
+  border: 1px solid #374151;
+  padding: 16px;
+  border-radius: 10px;
+}

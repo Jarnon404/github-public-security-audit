@@ -1,0 +1,25 @@
+name: Pester Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  repository-tests:
+    name: repository-tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          Install-Module Pester -MinimumVersion 5.0 -Force -Scope CurrentUser
+          Invoke-Pester -Path ./tests -Output Detailed

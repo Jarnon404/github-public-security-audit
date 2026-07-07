@@ -1,0 +1,36 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.tmp
+*.temp
+*.log
+
+# Generated audit output
+github-security-audit-*/
+AuditReports/
+Reports/
+Output/
+out/
+dist/
+
+# Exports
+*.csv
+*.xlsx
+*.xml
+*.jsonl
+
+# Archives
+*.zip
+*.7z
+*.rar
+
+# Secrets and local config
+.env
+.env.*
+*.key
+*.pem
+*.pfx
+*.p12
+
+# Keep GitHub Pages entry point trackable
+!docs/index.html

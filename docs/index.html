@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>GitHub Public Security Audit</title>
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+<main>
+  <h1>GitHub Public Security Audit</h1>
+  <p>PowerShell tool for auditing public GitHub repositories and GitHub Pages sites.</p>
+
+  <section>
+    <h2>What it checks</h2>
+    <ul>
+      <li>Repository metadata and public settings</li>
+      <li>GitHub Pages configuration and live HTTP status</li>
+      <li>Branch protection and required status checks</li>
+      <li>GitHub Actions workflow status</li>
+      <li>Expected governance files such as SECURITY.md and CODEOWNERS</li>
+      <li>Static public-safety findings</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Output</h2>
+    <p>The tool generates CSV, TXT and an interactive HTML report. Temporary offline clone data is removed by default.</p>
+  </section>
+
+  <section>
+    <h2>Usage</h2>
+    <pre><code>pwsh -NoProfile -ExecutionPolicy Bypass `
+  -File .\scripts\Invoke-GitHubPublicSecurityAudit.ps1 `
+  -Owner "YourGitHubUserOrOrg" `
+  -Repositories @("repo-one","repo-two")</code></pre>
+  </section>
+</main>
+</body>
+</html>

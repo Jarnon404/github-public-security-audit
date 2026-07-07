@@ -1,0 +1,52 @@
+name: Public Safety Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  public-safety-check:
+    name: public-safety-check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Run public safety checks
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $ForbiddenFiles = Get-ChildItem -Path . -Recurse -File |
+            Where-Object {
+              $_.FullName -notmatch '[\/]\.git[\/]' -and
+              $_.FullName -notmatch '[\/]tests[\/]' -and
+              (
+                $_.Name -match '\.(pfx|p12|pem|key)$' -or
+                $_.Name -match '\.env(\..*)?$'
+              )
+            }
+
+          if ($ForbiddenFiles) {
+            $ForbiddenFiles | Select-Object FullName | Format-Table -AutoSize
+            throw 'Potential secret/config files found.'
+          }
+
+          $GeneratedOutput = Get-ChildItem -Path . -Recurse -Directory |
+            Where-Object {
+              $_.FullName -notmatch '[\/]\.git[\/]' -and
+              $_.Name -match '^github-security-audit-\d{8}-\d{6}$'
+            }
+
+          if ($GeneratedOutput) {
+            $GeneratedOutput | Select-Object FullName | Format-Table -AutoSize
+            throw 'Generated audit output folders must not be committed.'
+          }
+
+          Write-Host 'Public safety check passed.'
