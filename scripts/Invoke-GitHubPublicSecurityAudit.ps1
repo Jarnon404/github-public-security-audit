@@ -355,15 +355,74 @@ foreach ($Repo in $Repositories) {
     }
 }
 
+# Apply known-safe finding downgrades.
+# Added in v1.1.0 to reduce false positives from sanitized documentation examples.
+$KnownSafeFindingRules = @(
+    [pscustomobject]@{
+        RepositoryPattern = ".*"
+        CheckPattern      = "Email address"
+        DetailPattern     = "admin\.user@example\.com|example\.com"
+        Reason            = "Known-safe sanitized example email/domain."
+    },
+    [pscustomobject]@{
+        RepositoryPattern = ".*"
+        CheckPattern      = "Internal domain"
+        DetailPattern     = "contoso\.local|DC01\.contoso\.local"
+        Reason            = "Known-safe sanitized example internal domain."
+    },
+    [pscustomobject]@{
+        RepositoryPattern = "github-public-security-audit"
+        CheckPattern      = "Possible secret"
+        DetailPattern     = "secrets\\.GITHUB_TOKEN|GITHUB_TOKEN|id-token|LineText -match"
+        Reason            = "GitHub Actions token permission reference, not a secret value."
+    },
+    [pscustomobject]@{
+        RepositoryPattern = "github-public-security-audit"
+        CheckPattern      = "HTTP reference"
+        DetailPattern     = "http://|Search for http://"
+        Reason            = "Audit tool self-reference for detecting HTTP links."
+    }
+)
+
+$ReportSummary = foreach ($Finding in $Summary) {
+    $RepositoryValue = [string]$Finding.Repository
+    $AreaValue       = [string]$Finding.Area
+    $CheckValue      = [string]$Finding.Check
+    $StatusValue     = [string]$Finding.Status
+    $DetailValue     = [string]$Finding.Detail
+
+    if ($StatusValue -eq "WARN") {
+        foreach ($Rule in $KnownSafeFindingRules) {
+            $IsKnownSafe =
+                ($RepositoryValue -match $Rule.RepositoryPattern) -and
+                ($CheckValue -match $Rule.CheckPattern) -and
+                ($DetailValue -match $Rule.DetailPattern)
+
+            if ($IsKnownSafe) {
+                $StatusValue = "INFO"
+                $DetailValue = "$DetailValue Known-safe downgrade: $($Rule.Reason)"
+                break
+            }
+        }
+    }
+
+    [pscustomobject]@{
+        Repository = $RepositoryValue
+        Area       = $AreaValue
+        Check      = $CheckValue
+        Status     = $StatusValue
+        Detail     = $DetailValue
+    }
+}
 $CsvPath = Join-Path $OutDir "github-security-audit-summary.csv"
 $HtmlPath = Join-Path $OutDir "github-security-audit-summary.html"
 $TxtPath = Join-Path $OutDir "github-security-audit-summary.txt"
 
-$Summary |
+$ReportSummary |
     Sort-Object Repository, Area, Check |
     Export-Csv -Path $CsvPath -NoTypeInformation -Encoding UTF8
 
-$Summary |
+$ReportSummary |
     Sort-Object Repository, Area, Check |
     Format-Table -AutoSize |
     Out-String |
@@ -377,10 +436,10 @@ $StatusOrder = @{
     "PASS" = 4
 }
 
-$SortedSummary = $Summary |
+$SortedSummary = $ReportSummary |
     Sort-Object Repository, @{ Expression = { $StatusOrder[$_.Status] } }, Area, Check
 
-$Totals = $Summary |
+$Totals = $ReportSummary |
     Group-Object Status |
     Sort-Object Name |
     ForEach-Object {
@@ -388,7 +447,7 @@ $Totals = $Summary |
         "<button class='pill $StatusLower' type='button' onclick=`"setStatusFilter('$($_.Name)')`">$($_.Name): $($_.Count)</button>"
     }
 
-$RepositoryButtons = $Summary |
+$RepositoryButtons = $ReportSummary |
     Select-Object -ExpandProperty Repository -Unique |
     Sort-Object |
     ForEach-Object {
@@ -396,7 +455,7 @@ $RepositoryButtons = $Summary |
         "<button class='repo-btn' type='button' onclick=`"setRepoFilter('$RepoSafe', true)`">$RepoSafe</button>"
     }
 
-$RepositorySummaryRows = foreach ($RepoGroup in ($Summary | Group-Object Repository | Sort-Object Name)) {
+$RepositorySummaryRows = foreach ($RepoGroup in ($ReportSummary | Group-Object Repository | Sort-Object Name)) {
     $RepoName = $RepoGroup.Name
     $RepoId = "repo-" + ($RepoName -replace '[^a-zA-Z0-9_-]', '-')
     $PassCount = @($RepoGroup.Group | Where-Object Status -eq "PASS").Count
@@ -861,4 +920,6 @@ Write-Host "TXT:  $TxtPath"
 if (-not $KeepOfflineData) {
     Write-Host "Offline cloned repository data removed. Use -KeepOfflineData to keep intermediate folders." -ForegroundColor DarkGray
 }
+
+
 

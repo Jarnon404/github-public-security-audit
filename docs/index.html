@@ -34,6 +34,16 @@
   -Owner "YourGitHubUserOrOrg" `
   -Repositories @("repo-one","repo-two")</code></pre>
   </section>
+
+<section>
+  <h2>v1.1.0 Known-safe finding downgrades</h2>
+  <p>
+    Version 1.1.0 reduces false positives by downgrading documented sanitized examples
+    such as example.com, contoso.local and GitHub Actions token permission references
+    from WARN to INFO when they are known-safe public documentation values.
+  </p>
+</section>
 </main>
 </body>
 </html>
+
